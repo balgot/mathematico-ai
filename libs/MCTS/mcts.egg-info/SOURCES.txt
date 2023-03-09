@@ -1,0 +1,9 @@
+LICENSE.txt
+README.md
+mcts.py
+setup.cfg
+setup.py
+mcts.egg-info/PKG-INFO
+mcts.egg-info/SOURCES.txt
+mcts.egg-info/dependency_links.txt
+mcts.egg-info/top_level.txt
