@@ -31,9 +31,7 @@ class MathematicoState():
         return self.board.occupied_cells == self.board.size ** 2
 
     def getReward(self):
-        if self.isTerminal():
-            return self.board.score()
-        return 0
+        return self.board.score()
             
 
     def __eq__(self, other):

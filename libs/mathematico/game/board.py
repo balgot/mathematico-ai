@@ -220,9 +220,6 @@ class Board:
 
     def score(self) -> int:
         """Calculate and return the score for the FULL board."""
-        if self.occupied_cells != self.size ** 2:
-            raise ValueError(f"Board is not full - {self}")
-
         total_score = 0
         for i in range(self.size):
             total_score += evaluate_line(self.row_rle(i))
