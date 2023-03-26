@@ -40,13 +40,15 @@ def random_policy(state: StateI):
     state and return the associated reward.
     """
     while not state.is_terminal():
-        try:
-            action = random.choice(state.get_possible_actions())
-        except IndexError as e:
+        available_actions = state.get_possible_actions()
+        if not available_actions:
             raise Exception(
                 f"Non-terminal state has no possible actions: {state}"
-            ) from e
+            )
+
+        action = random.choice(available_actions)
         possible_states = state.take_action(action)
+
         states = [s for s, p in possible_states]
         probabs = [p for s, p in possible_states]
         state = random.choices(states, probabs, k = 1)[0]
@@ -171,7 +173,7 @@ class MCTS:
         # return stuff
         combined = list(zip(actions, exp_values))
         if not stochastic:
-            return [max(combined, key=lambda a,v: v)]
+            return [max(combined, key=lambda el: el[1])]
         else:
             return combined
 
@@ -225,7 +227,7 @@ class MCTS:
         while node is not None:
             node.num_visits += 1
             node.total_reward += reward * prob
-            prob = node
+            prob = node.p
             node = node.parent
 
     def _utm(self, node: _TreeNode, exploration: float, root_visits: int) -> float:
