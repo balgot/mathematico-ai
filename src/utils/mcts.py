@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Union, Sequence, TypeVar, Hashable, Literal
 from itertools import count
 from collections import defaultdict
+import textwrap
 
 
 Action = TypeVar("Action", bound=Hashable)
@@ -82,6 +83,26 @@ class _TreeNode:
         new_node = _TreeNode(state, prob, self)
         self.children[action].append(new_node)
         return new_node
+
+
+    def pprint(self, indent=0, action="") -> str:
+        _children = '\n'.join(c.pprint(indent + 1, a)
+                                for a, cc in self.children.items()
+                                for c in cc)
+        return textwrap.indent(
+            textwrap.dedent(
+                f"""
+                ({action}) {self.__class__.__name__}:
+                  reward: {self.total_reward}
+                  visits: {self.num_visits}
+                  terminal: {self.is_terminal}
+                  actions: {self.children.keys()}
+                  probab: {self.p}
+
+                {_children}
+                """),
+            "\t" * indent
+        )
 
 
     def __str__(self):
@@ -170,6 +191,8 @@ class MCTS:
                 expectation += child.p * value
             exp_values.append(expectation)
 
+        # print(self.root.pprint())  # debugging, TODO
+
         # return stuff
         combined = list(zip(actions, exp_values))
         if not stochastic:
@@ -199,6 +222,7 @@ class MCTS:
         # here: find the first unexpanded child
 
         actions = node.state.get_possible_actions()
+        random.shuffle(actions)
 
         # TODO: this gets repeated often, add a flag somewhere?
         for aidx, action in enumerate(actions):
@@ -207,17 +231,19 @@ class MCTS:
 
             # TODO: break out sooner by checking the length of the lists
             sp = node.state.take_action(action)
+            random.shuffle(sp)
+
             for sidx, (state, p) in enumerate(sp):
                 # TODO: costly
                 if state not in child_states:
                     children.append(_TreeNode(state, p, node))
 
-                # TODO: check if the node is fully expanded
-                # here: assuming deterministic ordering of actions and next states
-                if aidx == len(actions) - 1 and sidx == len(sp) - 1:
-                    node.is_fully_expanded = True
+                    # TODO: check if the node is fully expanded
+                    # here: assuming deterministic ordering of actions and next states
+                    if aidx == len(actions) - 1 and sidx == len(sp) - 1:
+                        node.is_fully_expanded = True
 
-                return children[-1]
+                    return children[-1]
 
         assert False, "Expanding already expanded node"
 
