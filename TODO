@@ -4,7 +4,6 @@
             Board.possible_moves -- changed from iterator to list
             Board.score -- allow score for any board size (CHECK that also RLE/scoring function is edited)
             changed relative imports
-    notebooks - just symmetries -- make cleaner
 
 2.  libraries import
     requirement.txt
