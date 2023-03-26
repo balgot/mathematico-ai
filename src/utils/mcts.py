@@ -56,15 +56,15 @@ def random_policy(state: StateI):
 class _TreeNode:
     """MCTS tree node."""
 
-    def __init__(self, state: StateI, parent: '_TreeNode | None' = None):
+    def __init__(self, state: StateI, p: float = 1, parent: '_TreeNode | None' = None):
         self.state = state
+        self.p = p  # probability getting here
         self.is_fully_expanded = self.is_terminal = state.is_terminal()
         self.parent = parent
         self.num_visits = 0
         self.total_reward = 0
-        self.children: dict[Action, list[tuple[_TreeNode, float]]] = defaultdict(list)
-        """Maps each action to the list of achievable
-        states and their probabilities."""
+        self.children: dict[Action, list[_TreeNode]] = defaultdict(list)
+        """Maps each action to the list of achievable states"""
 
     def add_child(self,
             action: Action,
@@ -74,11 +74,11 @@ class _TreeNode:
         """Add child to the current node."""
         # TODO: does not check the probability distribution
         nodes = self.children[action]
-        for node, _ in nodes:
+        for node in nodes:
             if node.state == state:
                 return node
-        new_node = _TreeNode(state, self)
-        self.children[action].append((new_node, prob))
+        new_node = _TreeNode(state, prob, self)
+        self.children[action].append(new_node)
         return new_node
 
 
@@ -89,6 +89,7 @@ class _TreeNode:
                 visits: {self.num_visits}
                 terminal: {self.is_terminal}
                 actions: {self.children.keys()}
+                probab: {self.p}
         """
 
 
@@ -162,9 +163,9 @@ class MCTS:
         exp_values: list[float] = []
         for a in actions:
             expectation = 0
-            for child, p in self.root.children[a]:
+            for child in self.root.children[a]:
                 value = child.total_reward / child.num_visits
-                expectation += p * value
+                expectation += child.p * value
             exp_values.append(expectation)
 
         # return stuff
@@ -176,47 +177,82 @@ class MCTS:
 
     def exec_round(self):
         """Do one round of MCTS."""
-        node = self.selectNode(self.root)
+        node = self.select_node(self.root)
         reward = self.rollout(node.state)
         self.backpropogate(node, reward)
 
-    def selectNode(self, root: _TreeNode):
+    def select_node(self, root: _TreeNode):
         """Select the next node to expand starting from `root`."""
         node = root
         while not node.is_terminal:
             if node.is_fully_expanded:
-                node = self.getBestChild(node, self.exploration_const)
+                node = self.best_child(node, self.exploration_const)
             else:
                 return self.expand(node)
         return node
 
-    def expand(self, node: _TreeNode):
+    def expand(self, node: _TreeNode) -> _TreeNode:
         """Expand the node."""
+        # TODO: decide whether to pursue new action or expand older actions
+        # here: find the first unexpanded child
+
         actions = node.state.get_possible_actions()
-        for action in actions:
-            if action not in node.children:
-                newNode = treeNode(node.state.takeAction(action), node)
-                node.children[action] = newNode
-                if len(actions) == len(node.children):
-                    node.isFullyExpanded = True
-                return newNode
+
+        # TODO: this gets repeated often, add a flag somewhere?
+        for aidx, action in enumerate(actions):
+            children = node.children[action]
+            child_states = [c.state for c in children]
+
+            # TODO: break out sooner by checking the length of the lists
+            sp = node.state.take_action(action)
+            for sidx, (state, p) in enumerate(sp):
+                # TODO: costly
+                if state not in child_states:
+                    children.append(_TreeNode(state, p, node))
+
+                # TODO: check if the node is fully expanded
+                # here: assuming deterministic ordering of actions and next states
+                if aidx == len(actions) - 1 and sidx == len(sp) - 1:
+                    node.is_fully_expanded = True
+
+                return children[-1]
+
         assert False, "Expanding already expanded node"
 
-    def backpropogate(self, node, reward):
+    def backpropogate(self, node: _TreeNode, reward: 'float | int'):
+        """Backpropagete the result of the rollout to the root."""
+        prob = 1
         while node is not None:
-            node.numVisits += 1
-            node.totalReward += reward
+            node.num_visits += 1
+            node.total_reward += reward * prob
+            prob = node
             node = node.parent
 
-    def getBestChild(self, node, explorationValue):
-        bestValue = float("-inf")
-        bestNodes = []
-        for child in node.children.values():
-            nodeValue = node.state.getCurrentPlayer() * child.totalReward / child.numVisits + explorationValue * math.sqrt(
-                2 * math.log(node.numVisits) / child.numVisits)
-            if nodeValue > bestValue:
-                bestValue = nodeValue
-                bestNodes = [child]
-            elif nodeValue == bestValue:
-                bestNodes.append(child)
-        return random.choice(bestNodes)
+    def _utm(self, node: _TreeNode, exploration: float, root_visits: int) -> float:
+        return (
+            node.total_reward / node.num_visits +
+            exploration * math.sqrt(2 * math.log(root_visits) / node.num_visits)
+        )
+
+    def best_child(self, node: _TreeNode, exploration: float) -> _TreeNode:
+        """Find the best child of this node based on the UTM formula."""
+        best_val = float("-inf")
+        best_actions = []
+
+        for action, children in node.children.items():
+            value = 0
+            for child in children:
+                _val = self._utm(child, exploration, node.num_visits)
+                value += _val * child.p
+
+            if value > best_val:
+                best_val = value
+                best_actions = [action]
+            elif value == best_val:
+                best_actions.append(action)
+
+        action = random.choice(action)
+        possible_children = node.children[action]
+        probabs = [c.p for c in possible_children]
+        child = random.choices(possible_children, probabs, k=1)
+        return child
