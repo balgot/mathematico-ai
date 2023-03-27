@@ -133,3 +133,7 @@ dmypy.json
 
 # Remove later?
 gui/
+
+.ideas
+.vscode/
+wandb/
