@@ -138,3 +138,28 @@ def all_symmetries(board: Board2D) -> list[Board2D]:
             res.append(r)
 
     return res
+
+
+def move_unique_classes(board: Board2D, moves: list[tuple[int, int]], card: int) -> list[tuple[int, int]]:
+    # TODO: test out
+    result = []
+    _result_hashes = set()
+    board = deepcopy(board)
+    # TODO: how to do the hashing
+    for row, col in moves:
+        assert board[row][col] == 0, "board must be empty at `move` position"
+        board[row][col] = card
+
+        contains = False
+        for symmetry in all_symmetries(board):
+            if hash(str(symmetry)) in _result_hashes:
+                contains = True
+                break
+
+        if not contains:
+            _result_hashes.add(hash(str(board)))
+            result.append((row, col))
+
+        board[row][col] = 0
+
+    return result
