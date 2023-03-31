@@ -1,3 +1,28 @@
+"""
+CLI script to measure and compare performance of Mathematico agents
+-------------------------------------------------------------------
+
+This script can be used to compare different (previously measured)
+Mathematico agents, or to measure a new one.
+
+To just display the results, do not include options --file or --cls.
+
+
+Sorting
+=======
+    The results are sorted based on one of the following criteria:
+        * average score [--sort-by-score]: based on the average score
+          obtained in the sampled games
+
+        * score gain / time [--sort-by-time-score]: estimates the performance
+          GAIN against the random player per one second of computation;
+
+        * tournament score [--sort-by-tournament]: for each of the simulated
+          rounds, ranks the available agents, the WINNER obtains score of
+          `len(agents) - 1`, each consecutive placement obtains one point less,
+          the last player is awarded 0 points; the final score is averaged
+          over all rounds. Default.
+"""
 import argparse
 import importlib.util
 import multiprocessing
@@ -156,7 +181,8 @@ def run_loop_star(args):
 
 def make_parser():
     parser = argparse.ArgumentParser(
-        description="CLI script to run performance testing for given agent"
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter
     )
 
     parser.add_argument("--file",
