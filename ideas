@@ -19,3 +19,8 @@
 7) use symmetries to find the classes of equivalent games in the early stages of search - easy way: generate all symmetries for each position, hash them - in get possible moves
 
 8) instead of E[X] it might be better to play against random and/or MCTS to evalaute per game difference - remove the randomness from game selection
+
+9) use all states from MCTS to train on, weight the loss by the number of visits
+
+10) in expansion of MCTS, choose only our actions using utb/utm, random actions choose randomly
+11) TreeNode.children: Mapping[non equivalent action, child states] + probabilty distribution on child states (based on the deck)
