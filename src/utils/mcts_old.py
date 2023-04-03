@@ -1,10 +1,13 @@
+"""Old (weak) implementation of MCTS, to be removed."""
+import time
 import math
 import random
-import textwrap
-import time
 from abc import ABC, abstractmethod
+from typing import Union, Sequence, TypeVar, Hashable, Literal
 from itertools import count
-from typing import Hashable, Sequence, TypeVar, Union
+from collections import defaultdict
+import textwrap
+
 
 Action = TypeVar("Action", bound=Hashable)
 """Action to take to traverse between MCTS states."""
@@ -12,16 +15,15 @@ Action = TypeVar("Action", bound=Hashable)
 
 class StateI(ABC):
     @abstractmethod
-    def get_current_player(self) -> int:
-        """Return 1 for maximizing, 0 for random, -1 for minimizing player."""
-
-    @abstractmethod
     def get_possible_actions(self) -> Sequence[Action]:
         """Return the sequeunce (list/tuple) of possible actions."""
 
     @abstractmethod
-    def take_action(self, action: Action) -> 'StateI':
-        """Apply action returning the pnext state."""
+    def take_action(self, action) -> 'list[tuple[StateI, float]]':
+        """
+        Apply action returning the probability distribution
+        on resulting states.
+        """
 
     @abstractmethod
     def is_terminal(self) -> bool:
@@ -47,20 +49,42 @@ def random_policy(state: StateI):
             )
 
         action = random.choice(available_actions)
-        state = state.take_action(action)
+        possible_states = state.take_action(action)
+
+        states = [s for s, p in possible_states]
+        probabs = [p for s, p in possible_states]
+        state = random.choices(states, probabs, k = 1)[0]
     return state.get_reward()
 
 
 class _TreeNode:
     """MCTS tree node."""
 
-    def __init__(self, state: StateI, parent: '_TreeNode | None' = None):
+    def __init__(self, state: StateI, p: float = 1, parent: '_TreeNode | None' = None):
         self.state = state
+        self.p = p  # probability getting here
         self.is_fully_expanded = self.is_terminal = state.is_terminal()
         self.parent = parent
         self.num_visits = 0
         self.total_reward = 0
-        self.children: dict[Action, _TreeNode] = {}
+        self.children: dict[Action, list[_TreeNode]] = defaultdict(list)
+        """Maps each action to the list of achievable states"""
+
+    def add_child(self,
+            action: Action,
+            state: StateI,
+            prob: float
+    ) -> '_TreeNode':
+        """Add child to the current node."""
+        # TODO: does not check the probability distribution
+        nodes = self.children[action]
+        for node in nodes:
+            if node.state == state:
+                return node
+        new_node = _TreeNode(state, prob, self)
+        self.children[action].append(new_node)
+        return new_node
+
 
     def pprint(self, indent=0, action="") -> str:
         _children = '\n'.join(c.pprint(indent + 1, a)
@@ -69,16 +93,18 @@ class _TreeNode:
         return textwrap.indent(
             textwrap.dedent(
                 f"""
-                    ({action}) {self.__class__.__name__}:
-                        reward: {self.total_reward}
-                        visits: {self.num_visits}
-                        terminal: {self.is_terminal}
-                        actions: {self.children.keys()}
+                ({action}) {self.__class__.__name__}:
+                  reward: {self.total_reward}
+                  visits: {self.num_visits}
+                  terminal: {self.is_terminal}
+                  actions: {self.children.keys()}
+                  probab: {self.p}
 
-                        {_children}
+                {_children}
                 """),
             "\t" * indent
         )
+
 
     def __str__(self):
         return self.pprint()
@@ -114,7 +140,10 @@ class MCTS:
         self.max_iters = iters_limit
         self.root: '_TreeNode | None' = None
 
-    def search(self, state: StateI) -> tuple[Action, float]:
+    def search(self,
+            state: StateI,
+            stochastic: bool = False  # not used yet
+    ) -> list[tuple[Action, float]]:
         """
         Find the best move.
 
@@ -122,14 +151,14 @@ class MCTS:
 
         Arguments
         =========
-            state: current game state
+            state
+            stochastic: if true, returns a list of action-reward
+                values, otherwise returns only one such pair
 
         Returns
         =======
-            best (action-expected reward) pair from the given state
+            list of action-expected reward pairs from the given state
         """
-
-        # TODO: try to reuse old root's children
         self.root = _TreeNode(state)
         start = time.time()
         end = start + (self.max_time or 0) / 1000
@@ -150,12 +179,20 @@ class MCTS:
         actions = list(self.root.children.keys())
         exp_values: list[float] = []
         for a in actions:
-            child = self.root.children[a]
-            value = child.total_reward / child.num_visits
-            exp_values.append(value)
+            expectation = 0
+            for child in self.root.children[a]:
+                value = child.total_reward / child.num_visits
+                expectation += child.p * value
+            exp_values.append(expectation)
 
-        # note: this returns always the best action
-        return max(zip(actions, exp_values), key=lambda e: e[1])
+        # print(self.root.pprint())  # debugging, TODO
+
+        # return stuff
+        combined = list(zip(actions, exp_values))
+        if not stochastic:
+            return [max(combined, key=lambda el: el[1])]
+        else:
+            return combined
 
     def exec_round(self):
         """Do one round of MCTS."""
@@ -163,7 +200,7 @@ class MCTS:
         reward = self.rollout(node.state)
         self.backpropogate(node, reward)
 
-    def select_node(self, root: _TreeNode) -> _TreeNode:
+    def select_node(self, root: _TreeNode):
         """Select the next node to expand starting from `root`."""
         node = root
         while not node.is_terminal:
@@ -175,30 +212,48 @@ class MCTS:
 
     def expand(self, node: _TreeNode) -> _TreeNode:
         """Expand the node."""
+        # TODO: decide whether to pursue new action or expand older actions
+        # here: find the first unexpanded child
 
-        # TODO: cache this across different invokations
-        all_actions = list(node.state.get_possible_actions())
-        for action in all_actions:
-            if action not in node.children:
-                new_node = _TreeNode(node.state.take_action(action), node)
-                node.children[action] = new_node
-                if len(all_actions) == len(node.children):
-                    node.is_fully_expanded = True
-                return new_node
+        actions = node.state.get_possible_actions()
+        random.shuffle(actions)
+
+        # TODO: this gets repeated often, add a flag somewhere?
+        for aidx, action in enumerate(actions):
+            children = node.children[action]
+            child_states = [c.state for c in children]
+
+            # TODO: break out sooner by checking the length of the lists
+            sp = node.state.take_action(action)
+            random.shuffle(sp)
+
+            for sidx, (state, p) in enumerate(sp):
+                # TODO: costly
+                if state not in child_states:
+                    children.append(_TreeNode(state, p, node))
+
+                    # TODO: check if the node is fully expanded
+                    # here: assuming deterministic ordering of actions and next states
+                    if aidx == len(actions) - 1 and sidx == len(sp) - 1:
+                        node.is_fully_expanded = True
+
+                    return children[-1]
 
         assert False, "Expanding already expanded node"
 
-    def backpropogate(self, node: _TreeNode, reward: int):
+    def backpropogate(self, node: _TreeNode, reward: 'float | int'):
         """Backpropagete the result of the rollout to the root."""
+        prob = 1
         while node is not None:
             node.num_visits += 1
-            node.total_reward += reward
+            node.total_reward += reward * prob
+            prob = node.p
             node = node.parent
 
-    def _uct(self, node: _TreeNode, exploration: float, parent: _TreeNode) -> float:
+    def _utm(self, node: _TreeNode, exploration: float, root_visits: int) -> float:
         return (
             node.total_reward / node.num_visits +
-            exploration * math.sqrt(2 * math.log(parent.num_visits) / node.num_visits)
+            exploration * math.sqrt(2 * math.log(root_visits) / node.num_visits)
         )
 
     def best_child(self, node: _TreeNode, exploration: float) -> _TreeNode:
@@ -206,8 +261,11 @@ class MCTS:
         best_val = float("-inf")
         best_actions = []
 
-        for action, child in node.children.items():
-            value = self._uct(child, exploration, node)
+        for action, children in node.children.items():
+            value = 0
+            for child in children:
+                _val = self._utm(child, exploration, node.num_visits)
+                value += _val * child.p
 
             if value > best_val:
                 best_val = value
@@ -215,5 +273,8 @@ class MCTS:
             elif value == best_val:
                 best_actions.append(action)
 
-        action = random.choice(best_actions)
-        return node.children[action]
+        action = random.choice(action)
+        possible_children = node.children[action]
+        probabs = [c.p for c in possible_children]
+        child = random.choices(possible_children, probabs, k=1)
+        return child
