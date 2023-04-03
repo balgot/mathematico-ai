@@ -1,5 +1,4 @@
 #pragma once
-#define DEBUG
 
 #include <algorithm>
 #include <cassert>
