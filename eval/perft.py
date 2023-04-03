@@ -1,6 +1,6 @@
 """
 CLI script to measure and compare performance of Mathematico agents
--------------------------------------------------------------------
+===================================================================
 
 This script can be used to compare different (previously measured)
 Mathematico agents, or to measure a new one.
@@ -9,7 +9,7 @@ To just display the results, do not include options --file or --cls.
 
 
 Sorting
-=======
+-------
     The results are sorted based on one of the following criteria:
         * average score [--sort-by-score]: based on the average score
           obtained in the sampled games
@@ -201,7 +201,7 @@ def make_parser():
     parser.add_argument("--no-parallel",
         action="store_true",
         default=False,
-        help="Don't use parallel evaluation"
+        help="Don't use parallel evaluation (e.g. when `input()` is used)."
     )
 
     parser.add_argument("--verbose", "-v",
@@ -235,32 +235,38 @@ def main():
         sys.path.append(parent_dir)
 
         # Load the class from the file path
-        module_name = args.file.rstrip("/").replace("\\", "/").split("/")[-1].rstrip(".py")
+        module_name = args.file.rstrip("/").replace("\\", "/").split("/")[-1].removesuffix(".py")
         module = importlib.import_module(module_name)
         cls = getattr(module, args.cls)
 
         # prepare multiprocessing stuff
-        proc = max(1, 1 if args.no_parallel else multiprocessing.cpu_count() - 1)
-        if verbose:
-            print(f"[info] Using {proc} processes")
-
         results = {}
         times = {}
-
-        with multiprocessing.Pool(processes=proc) as pool:
-            # Run the simulations
-            arguments = zip(repeat(cls), SEEDS)
-            # there is no istarmap - we will use a run_loop_star that takes one
-            # argument and unpacks it for run_loop
-            for res in tqdm(pool.imap_unordered(run_loop_star, arguments, chunksize=1), total=len(SEEDS)):
-                seed, result, time_taken = res
+        if args.no_parallel:
+            for seed in tqdm(SEEDS, total=len(SEEDS)):
+                seed, result, time_taken = run_loop(cls, seed)
                 results[seed] = result
                 times[seed] = time_taken
+        else:
+            # go parallel
+            proc = max(1, multiprocessing.cpu_count() - 1)
+            if verbose:
+                print(f"[info] Using {proc} processes")
+
+            with multiprocessing.Pool(processes=proc) as pool:
+                # Run the simulations
+                arguments = zip(repeat(cls), SEEDS)
+                # there is no istarmap - we will use a run_loop_star that takes one
+                # argument and unpacks it for run_loop
+                for res in tqdm(pool.imap_unordered(run_loop_star, arguments, chunksize=1), total=len(SEEDS)):
+                    seed, result, time_taken = res
+                    results[seed] = result
+                    times[seed] = time_taken
 
         # store the data
         scores = [results[s] for s in SEEDS]
         avg_time = statistics.mean(times.values())
-        record = Record(args.cls, args.file, args.desc, scores, avg_time)
+        record = Record(args.cls, args.file, args.desc or "", scores, avg_time)
         _store_data(record)
 
     all_data = _load_data()
