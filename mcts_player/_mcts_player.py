@@ -1,5 +1,5 @@
 from libs.mathematico.game import Player, Board
-from ._mcts_state import MathematicoState
+from ._mcts_state import MathematicoDecesionState
 from libs.MCTS.mcts import mcts
 import math
 
@@ -17,7 +17,7 @@ class MctsPlayer(Player):
         self.board = Board()
 
     def move(self, number: int):
-        state = MathematicoState(self.board, number)
+        state = MathematicoDecesionState(self.board, number)
         result = self.mcts.search(initialState=state, needDetails=True)
         action = result["action"]
         
