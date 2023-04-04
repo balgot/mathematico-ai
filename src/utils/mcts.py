@@ -113,8 +113,9 @@ class MCTS:
         self.max_time = time_limit
         self.max_iters = iters_limit
         self.root: '_TreeNode | None' = None
+        # self.root_: '_TreeNode | None' = None  # the root of the whole tree
 
-    def search(self, state: StateI) -> tuple[Action, float]:
+    def search_(self, from_node: _TreeNode) -> tuple[Action, float]:
         """
         Find the best move.
 
@@ -122,15 +123,14 @@ class MCTS:
 
         Arguments
         =========
-            state: current game state
+            from_node: node to reuse when searching
 
         Returns
         =======
             best (action-expected reward) pair from the given state
         """
 
-        # TODO: try to reuse old root's children
-        self.root = _TreeNode(state)
+        self.root = from_node
         start = time.time()
         end = start + (self.max_time or 0) / 1000
 
@@ -157,6 +157,25 @@ class MCTS:
         # note: this returns always the best action
         return max(zip(actions, exp_values), key=lambda e: e[1])
 
+    def search(self, state: StateI) -> tuple[Action, float]:
+        """
+        Find the best move.
+
+        Using MCTS, find the best move starting from the given state.
+
+        Arguments
+        =========
+            state: current game state
+
+        Returns
+        =======
+            best (action-expected reward) pair from the given state
+        """
+        new_root = _TreeNode(state)
+        self.root = new_root
+        # self.root_ = new_root
+        return self.search_(new_root)
+
     def exec_round(self):
         """Do one round of MCTS."""
         node = self.select_node(self.root)
@@ -176,7 +195,6 @@ class MCTS:
     def expand(self, node: _TreeNode) -> _TreeNode:
         """Expand the node."""
 
-        # TODO: cache this across different invokations
         all_actions = list(node.state.get_possible_actions())
         for action in all_actions:
             if action not in node.children:
@@ -197,7 +215,7 @@ class MCTS:
 
     def _uct(self, node: _TreeNode, exploration: float, parent: _TreeNode) -> float:
         return (
-            node.total_reward / node.num_visits +
+            node.state.get_current_player() * node.total_reward / node.num_visits +
             exploration * math.sqrt(2 * math.log(parent.num_visits) / node.num_visits)
         )
 

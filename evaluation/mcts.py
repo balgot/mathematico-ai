@@ -1,5 +1,6 @@
 import os, sys
 sys.path.append(os.path.join(".."))
+sys.path.append("/home/miso/fi/uiprojekt")
 
 from src.agents.mcts_player import MctsPlayer
 
@@ -22,3 +23,11 @@ class MCTS__10s(MctsPlayer):
 class MCTS__30s(MctsPlayer):
     def __init__(self):
         super().__init__(max_time_ms=30_000)
+
+
+if __name__ == "__main__":
+    from mathematico import Mathematico
+    game = Mathematico()
+    player = MCTS__100ms()
+    game.add_player(player)
+    game.play(verbose=True)

@@ -5,10 +5,20 @@ import math
 
 from mathematico import Board, Player
 from src.utils.mcts import MCTS
-from ._mcts_state import Action, MathematicoState
+from ._mcts_state import MoveState, CardState
 
 
 _EXPLORATION = 1 / math.sqrt(2)
+
+
+def find_deck(b: Board):
+    res = { i: 4 for i in range(1, 13+1) }
+    for row in b.grid:
+        for e in row:
+            if e != 0:
+                res[e] -= 1
+                assert res[e] >= 0
+    return res
 
 
 class MctsPlayer(Player):
@@ -31,8 +41,28 @@ class MctsPlayer(Player):
 
     def reset(self) -> None:
         self.board = Board()
+        self.mcts.root = None  # TODO: make sure this resets MCTS in the future
 
     def move(self, number: int):
-        state = MathematicoState(self.board, number)
-        action: Action = self.mcts.search(state)[0]
+        action = None
+
+        # first try to reuse old MCTS calculation
+        if self.mcts.root is not None:
+            assert isinstance(self.mcts.root.state, CardState)
+            if number in self.mcts.root.children:
+                node = self.mcts.root.children[number]
+                assert node.state.board.grid == self.board.grid
+                action: tuple[int, int] = self.mcts.search_(node)[0]
+
+        # if failed, create a new state
+        if action is None:
+            deck = find_deck(self.board)
+            deck[number] -= 1  # remove current card
+            math_state = MoveState(self.board, deck, number)
+            action: tuple[int, int] = self.mcts.search(math_state)[0]
+
+        assert action is not None
         self.board.make_move(action, number)
+
+        # update the root state
+        self.mcts.root = self.mcts.root.children[action]
