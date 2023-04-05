@@ -154,6 +154,23 @@ class MCTS:
             value = child.total_reward / child.num_visits
             exp_values.append(value)
 
+        if len(actions) == 0:
+            assert False, f"""
+                MCTS has not explored any actions. Is this a leaf node or
+                are the execution contraints too tight?
+
+                Explored tree:
+                    {self.root.pprint()}
+
+                Current board:
+                    {self.root.state.board}
+
+                {iter=} / {self.max_iters}
+
+                time={time.time() - start} / {self.max_time / 1000}
+                ({self.max_time=})
+            """
+
         # note: this returns always the best action
         return max(zip(actions, exp_values), key=lambda e: e[1])
 
