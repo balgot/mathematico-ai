@@ -4,7 +4,7 @@ sys.path.append(os.path.join("../../"))
 import math
 
 from mathematico import Board, Player
-from src.utils.mcts import MCTS
+from src.utils.mcts import MCTS, random_policy
 from ._mcts_state import MoveState, CardState
 
 
@@ -28,16 +28,18 @@ class MctsPlayer(Player):
     Each time a decision about the next move is made, runs the MCTS
     with given resources contraints and finds the optimal move.
 
-    Note: uses random policy for rollouts
+    Note: uses (not very efficient) random policy for rollouts by default
     """
 
     def __init__(self,
         max_time_ms: int = 100,
         max_simulations: 'int | None' = None,
-        exploration_constant: float = _EXPLORATION
+        exploration_constant: float = _EXPLORATION,
+        policy = random_policy
     ):
         super().__init__()
-        self.mcts = MCTS(max_time_ms, max_simulations, exploration_constant)
+        self.mcts = MCTS(max_time_ms, max_simulations,
+                         exploration_constant, policy)
 
     def reset(self) -> None:
         self.board = Board()
