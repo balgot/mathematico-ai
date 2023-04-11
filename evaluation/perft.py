@@ -67,9 +67,9 @@ class Record:
 
     @classmethod
     def load(cls, s: str) -> 'Record':
-        name, file, desc, *scores, avg_time = s.split(",")
-        scores = list(map(float, scores))
-        avg_time = float(avg_time)
+        name, file, desc, *_scores, _avg_time = s.split(",")
+        scores = list(map(float, _scores))
+        avg_time = float(_avg_time)
         return cls(name, file, desc, scores, avg_time)
 
 
