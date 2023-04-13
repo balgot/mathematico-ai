@@ -98,7 +98,7 @@ class PyGamePlayer(Player):
                             self.board.make_move((row, col), card_number)
                             self._update_display(" ")
 
-                            if self.board.occupied_cells == 5*5:
-                                print(f"Score: {self.board.score()}")
+                            # if self.board.occupied_cells == 5*5:
+                            #     print(f"Score: {self.board.score()}")
 
                             return
