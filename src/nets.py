@@ -66,6 +66,130 @@ class DenseBlock(nn.Module):
 ################################################################################
 
 
+class Simple_Board_v0(nn.Module):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.block = nn.Sequential(
+            OneHot(BOARD_CARDS),
+            nn.Flatten(),
+            nn.Linear(5*5*14, 1024),
+            nn.Sigmoid(),
+            nn.Linear(1024, 1)
+        )
+
+    def forward(self, board: torch.Tensor):
+        return self.block(board)
+
+
+class Dense_board(nn.Module):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.board = nn.Sequential(
+            OneHot(BOARD_CARDS),
+            nn.Flatten(),
+            DenseBlock([350, 1024], 0.3, True),
+            DenseBlock([1024, 512, 256, 1], 0.4, False)
+        )
+
+    def forward(self, board: torch.Tensor):
+        return self.board(board)
+
+
+class Dense_board_v1(nn.Module):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.board = nn.Sequential(
+            OneHot(BOARD_CARDS),
+            nn.Flatten(),
+            DenseBlock([350, 1024], 0.3, True),
+            DenseBlock([1024, 512], 0.3, False),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 1)
+        )
+
+    def forward(self, board: torch.Tensor):
+        return self.board(board)
+
+
+class Dense_board_v2(nn.Module):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.board = nn.Sequential(
+            OneHot(BOARD_CARDS),
+            nn.Flatten(),
+            DenseBlock([350, 1024, 2048, 2048, 2048], 0.3, True),
+            DenseBlock([2048, 1024, 1024, 1024, 1024, 512], 0.3, False),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 1)
+        )
+
+    def forward(self, board: torch.Tensor):
+        return self.board(board)
+
+
+class Dense_board_v3(nn.Module):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.board = nn.Sequential(
+            OneHot(BOARD_CARDS),
+            nn.Flatten(),
+            nn.Linear(350, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 4096),
+            nn.GELU(),
+            nn.Linear(4096, 2048),
+            nn.GELU(),
+            nn.Linear(2048, 1024),
+            nn.GELU(),
+            nn.Linear(1024, 512),
+            nn.GELU(),
+            nn.Linear(512, 256),
+            nn.GELU(),
+            nn.Linear(256, 128),
+            nn.GELU(),
+            nn.Linear(128, 64),
+            nn.GELU(),
+            nn.Linear(64, 32),
+            nn.GELU(),
+            nn.Linear(32, 1)
+        )
+
+    def forward(self, board: torch.Tensor):
+        return self.board(board)
+
+
 class NonConvDenseOnly_v1(nn.Module):
     """
     Just FF NN, works with flattened one-hot encoded game.
@@ -94,6 +218,91 @@ class NonConvDenseOnly_v1(nn.Module):
         card = self.card_prep(card)
         joined = torch.cat([board, card], dim=-1)
         return self.final(joined)
+
+
+
+class Amethyst(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.features = nn.Conv2d(in_channels=BOARD_CARDS, out_channels=16, kernel_size=(5, 1), padding=0)  # feature extractor
+        self.line_proc = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(16, 32),
+            nn.ReLU(),
+            nn.Linear(32, 64),
+            nn.ReLU()
+        )  # line processor
+
+        self.mix_lines = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(64 * (5 + 5 + 2), 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU()
+        )  # combine lines
+
+        self.out = nn.Sequential(
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 16),
+            nn.ReLU(),
+            nn.Linear(16, 1)
+        )
+
+    def forward(self, board: torch.Tensor):
+        """
+        board = torch.tensor([[1,1,1,1], [1,1,1,1], ...]) -- BATCH_SIZE, 5, 5
+        """
+
+        # The board features
+        board = F.one_hot(board.long(), num_classes=BOARD_CARDS).float()
+        board = board.permute(0, 3, 1, 2) # permute dimensions to match expected order
+        # print(f"permuted board shape = {board.shape}")
+
+        # rows of the board
+        rows = self.features(board)
+        # print(f"rows shape = {rows.shape}")
+
+        # cols of the board
+        cols = self.features(board.transpose(-1, -2)) # TODO: makes sence?
+        # print(f"cols shape = {cols.shape}")
+
+        # main/anti diagonal
+        main = board.diagonal(0, -2, -1)[:, :, :, None]
+        anti = torch.flip(board, [-2, -1]).diagonal(0, -2, -1)[:, :, :, None]
+        # print(f"*diag shape {main.shape}")
+        # print(f"*anti shape {anti.shape}")
+        main = self.features(main)
+        anti = self.features(anti)
+        # print(f"diag shape {main.shape}")
+        # print(f"anti shape {anti.shape}")
+
+        # combine the features
+        combined = []
+        for tensor in (rows, cols, main, anti):
+            spl = torch.split(tensor, 1, dim=3)
+            for t in spl:
+                t = t.squeeze(dim=3)
+                t = t.permute(0, 2, 1)
+                t = self.line_proc(t)
+                t = t.permute(0, 2, 1)
+                combined.append(t)
+
+        board = torch.cat(combined, dim=-1)
+        # print(f"cat shape {board.shape}")
+        board = self.mix_lines(board)
+        # print(f"mixed lines shape {board.shape}")
+
+        # out
+        out = self.out(board)
+        # print(f"out shape {out.shape}")
+
+        return out
 
 
 class NNv1(torch.nn.Module):
