@@ -45,7 +45,7 @@ class MctsPlayer(Player):
         self.board = Board()
         self.mcts.root = None  # TODO: make sure this resets MCTS in the future
 
-    def move(self, number: int):
+    def move_(self, number: int):
         action = None
 
         # first try to reuse old MCTS calculation
@@ -54,17 +54,22 @@ class MctsPlayer(Player):
             if number in self.mcts.root.children:
                 node = self.mcts.root.children[number]
                 assert node.state.board.grid == self.board.grid
-                action: tuple[int, int] = self.mcts.search_(node)[0]
+                action, rew = self.mcts.search_(node)
 
         # if failed, create a new state
         if action is None:
             deck = find_deck(self.board)
             deck[number] -= 1  # remove current card
             math_state = MoveState(self.board, deck, number)
-            action: tuple[int, int] = self.mcts.search(math_state)[0]
+            action, rew = self.mcts.search(math_state)
 
         assert action is not None
         self.board.make_move(action, number)
 
         # update the root state
+        old_root = self.mcts.root
         self.mcts.root = self.mcts.root.children[action]
+        return rew, old_root
+
+    def move(self, number: int):
+        self.move_(number)

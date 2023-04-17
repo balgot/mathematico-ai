@@ -64,8 +64,7 @@ class _TreeNode:
 
     def pprint(self, indent=0, action="") -> str:
         _children = '\n'.join(c.pprint(indent + 1, a)
-                                for a, cc in self.children.items()
-                                for c in cc)
+                                for a, c in self.children.items())
         return textwrap.indent(
             textwrap.dedent(
                 f"""
