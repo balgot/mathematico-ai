@@ -1,6 +1,5 @@
 import os, sys
-sys.path.append(os.path.join(".."))
-sys.path.append("/home/miso/fi/uiprojekt")
+sys.path.append(os.path.abspath(os.path.join("..")))
 
 from src.agents.mcts_player import MctsPlayer
 

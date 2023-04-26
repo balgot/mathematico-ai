@@ -1,5 +1,15 @@
+"""
+Classes for generating human data.
+
+ConsolePlayer - for playing via console interface (from mathematico package)
+PyGamePlayer - opens a pygame windows, logs the results to console
+
+Running this module will initiate one game of PyGamePlayer, see:
+    python <module_name> --help
+for more info.
+"""
 import pygame
-from mathematico import Player, Board, HumanPlayer
+from mathematico import Player, Board, HumanPlayer, Mathematico
 
 
 class ConsolePlayer(HumanPlayer):
@@ -102,3 +112,43 @@ class PyGamePlayer(Player):
                             #     print(f"Score: {self.board.score()}")
 
                             return
+
+
+################################################################################
+## INTERACTIVE GAME
+################################################################################
+
+
+def main():
+    from perft import SEEDS
+    import argparse
+    import time
+
+    parser = argparse.ArgumentParser(description="Playing one game manually...")
+    parser.add_argument("--game",
+        type=int,
+        required=True,
+        help=f"Which game to play, in range [1, {len(SEEDS)}]"
+    )
+
+    args = parser.parse_args()
+
+    if args.game < 1 or args.game > len(SEEDS):
+        raise ValueError("Invalid argument for game, rerun with --help for details")
+
+    seed = SEEDS[args.game - 1]
+    player = PyGamePlayer()
+    game = Mathematico(seed=seed)
+    game.add_player(player)
+
+    start = time.time()
+    score = game.play()[0]
+    duration = time.time() - start
+
+    print(f"\nGame: {args.game}\nAchieved score: {score}\nTime [s]: {duration}")
+    print("\nMake sure to store the result in the appropriate column"
+          "in `data.csv` (first column is game=1) for further evaluation.")
+
+
+if __name__ == "__main__":
+    main()
