@@ -1,24 +1,11 @@
 # Evaluation of Mathematico agents
 
-This folder contains the scripts `perft.py` and `manual_play.py`
+This folder contains the script `perft.py`
 which can be used to measure the performance of one agent and compare
 it against previously measured agents.
 
 
 ## Usage
-
-To play a game and collect human results, use
-
-    python manual_play.py --game N
-
-where `N` is the number of the game to play, from the predefined
-seeds, on which all the games are played. This script let's you
-play a `pygame` mathematico, and prints the score with the final
-time to console. It is the responsibility of the human player
-to collect all **20** samples and store them in `data.csv` for
-future analysis.
-
----
 
 To visualize the measured data, just run:
 
@@ -44,6 +31,4 @@ See `python perft.py --help` for more.
 ## Recommendations
 
 For reproducibility, either set random seeds for each agent, or run the same
-agent multiple times.
-
-Keep a copy of the run code within this directory for future examination.
+agent multiple times. Ideally add commit hash to description via `--desc`.

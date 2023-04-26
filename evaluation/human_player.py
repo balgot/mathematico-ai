@@ -123,8 +123,18 @@ def main():
     from perft import SEEDS
     import argparse
     import time
+    import textwrap
 
-    parser = argparse.ArgumentParser(description="Playing one game manually...")
+    HELP_STR = textwrap.dedent(f"""\
+        Playing one game of mathematico using pygame.
+
+        The mandatory argument (--game) specifies, which of the predefined
+        seeds to play. This script let's you
+        play a `pygame` mathematico, and prints the score with the final
+        time to console.
+    """)
+
+    parser = argparse.ArgumentParser(description=HELP_STR)
     parser.add_argument("--game",
         type=int,
         required=True,
