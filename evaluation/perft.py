@@ -33,6 +33,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from itertools import count, repeat
+from typing import List
 
 from mathematico import Mathematico
 from tabulate import tabulate
@@ -55,7 +56,7 @@ class Record:
     name: str
     file: str
     desc: str
-    points: list[float]
+    points: List[float]
     avg_time: float
 
     def format(self) -> str:
@@ -89,7 +90,7 @@ def _store_data(data: Record):
         f.write(data.format() + "\n")
 
 
-def _load_data() -> list[Record]:
+def _load_data() -> List[Record]:
     with open(DB_FILE, "r", encoding="utf-8") as f:
         return list(map(Record.load, f))
 
@@ -98,7 +99,7 @@ def _load_data() -> list[Record]:
 ##  Presentation
 ################################################################################
 
-def _tournament_rankings(data: list[Record]) -> list[float]:
+def _tournament_rankings(data: List[Record]) -> List[float]:
     if not data:
         return []
 
@@ -115,16 +116,16 @@ def _tournament_rankings(data: list[Record]) -> list[float]:
     return [score/ROUNDS for score in ranks]
 
 
-def _avg_score_rankings(data: list[Record]) -> list[float]:
+def _avg_score_rankings(data: List[Record]) -> List[float]:
     return [statistics.mean(d.points) for d in data]
 
 
-def _score_per_time_rankings(data: list[Record]) -> list[float]:
+def _score_per_time_rankings(data: List[Record]) -> List[float]:
     scores = _avg_score_rankings(data)
     return [(s - RANDOM_SCORE) / (d.avg_time + EPS) for s, d in zip(scores, data)]
 
 
-def _prep_data(data: list[Record], rank: Ranking):
+def _prep_data(data: List[Record], rank: Ranking):
     headers = [
         "name", "file", "description", "avg_score",
         "time", "score gain/time", "tournament"
