@@ -18,7 +18,7 @@ class OneHot(nn.Module):
         super().__init__(*args, **kwargs)
         self.num_classes = num_classes
 
-    def forward(self, x: torch.tensor) -> torch.tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Expecting input of shape: [BATCH_SIZE, *] of type int
         Returns: [BATCH_SIZE, *, self.num_classes]

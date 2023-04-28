@@ -1,9 +1,10 @@
 """Find all symetries of the board."""
 from copy import deepcopy
+from typing import List, Tuple
 
 
 # This is how the board is represented internally
-Board2D = list[list[int]]
+Board2D = List[List[int]]
 
 
 def _spec_swap(board: Board2D, i: int, j: int) -> Board2D:
@@ -101,7 +102,7 @@ def _rotate(board: Board2D) -> Board2D:
     _trans(board)
     return board
 
-def all_symmetries(board: Board2D) -> list[Board2D]:
+def all_symmetries(board: Board2D) -> List[Board2D]:
     """
     Find all symmetries of the board.
 
@@ -140,12 +141,11 @@ def all_symmetries(board: Board2D) -> list[Board2D]:
     return res
 
 
-def move_unique_classes(board: Board2D, moves: list[tuple[int, int]], card: int) -> list[tuple[int, int]]:
-    # TODO: test out
+def move_unique_classes(board: Board2D, moves: List[Tuple[int, int]], card: int) -> List[Tuple[int, int]]:
     result = []
     _result_hashes = set()
     board = deepcopy(board)
-    # TODO: how to do the hashing
+
     for row, col in moves:
         assert board[row][col] == 0, "board must be empty at `move` position"
         board[row][col] = card

@@ -4,7 +4,7 @@ import textwrap
 import time
 from abc import ABC, abstractmethod
 from itertools import count
-from typing import Hashable, Sequence, TypeVar, Union
+from typing import Hashable, Sequence, TypeVar, Union, Dict, Tuple, List
 
 Action = TypeVar("Action", bound=Hashable)
 """Action to take to traverse between MCTS states."""
@@ -60,7 +60,7 @@ class _TreeNode:
         self.parent = parent
         self.num_visits = 0
         self.total_reward = 0
-        self.children: dict[Action, _TreeNode] = {}
+        self.children: Dict[Action, _TreeNode] = {}
 
     def pprint(self, indent=0, action="") -> str:
         _children = '\n'.join(c.pprint(indent + 1, a)
@@ -114,7 +114,7 @@ class MCTS:
         self.root: '_TreeNode | None' = None
         # self.root_: '_TreeNode | None' = None  # the root of the whole tree
 
-    def search_(self, from_node: _TreeNode) -> tuple[Action, float]:
+    def search_(self, from_node: _TreeNode) -> Tuple[Action, float]:
         """
         Find the best move.
 
@@ -147,7 +147,7 @@ class MCTS:
 
         # compute the statistics
         actions = list(self.root.children.keys())
-        exp_values: list[float] = []
+        exp_values: List[float] = []
         for a in actions:
             child = self.root.children[a]
             value = child.total_reward / child.num_visits
@@ -173,7 +173,7 @@ class MCTS:
         # note: this returns always the best action
         return max(zip(actions, exp_values), key=lambda e: e[1])
 
-    def search(self, state: StateI) -> tuple[Action, float]:
+    def search(self, state: StateI) -> Tuple[Action, float]:
         """
         Find the best move.
 

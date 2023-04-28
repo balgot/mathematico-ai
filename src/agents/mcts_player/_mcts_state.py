@@ -1,7 +1,8 @@
 import os, sys
-sys.path.append(os.path.join("../../"))
+sys.path.append(os.path.abspath(os.path.join("../../")))
 
 from copy import deepcopy
+from typing import Tuple, Dict, List
 
 from mathematico import Board
 from src.utils.mcts import StateI
@@ -10,12 +11,12 @@ from src.utils.mcts import StateI
 # No need to implement Action object. An action object needs to implement
 # __hash__ and __eq__, which tuple does.
 CardChoice = int
-MoveChoice = tuple[int, int]
+MoveChoice = Tuple[int, int]
 """Position on the board."""
 
 
 class CardState(StateI):
-    def __init__(self, board: Board, deck: dict[int, int]) -> None:
+    def __init__(self, board: Board, deck: Dict[int, int]) -> None:
         super().__init__()
         self.board = board
         self.deck = deck
@@ -27,7 +28,7 @@ class CardState(StateI):
     def get_current_player(self) -> int:
         return 0
 
-    def get_possible_actions(self) -> list[CardChoice]:
+    def get_possible_actions(self) -> List[CardChoice]:
         # TODO: ignoring the action probability
         return self._poss_actions
 
@@ -47,7 +48,7 @@ class CardState(StateI):
 
 
 class MoveState(StateI):
-    def __init__(self, board: Board, deck: dict[int, int], card: int):
+    def __init__(self, board: Board, deck: Dict[int, int], card: int):
         self.board = board
         self.deck = deck
         self.card_to_play = card
@@ -57,7 +58,7 @@ class MoveState(StateI):
     def get_current_player(self) -> int:
         return 1
 
-    def get_possible_actions(self) -> list[MoveChoice]:
+    def get_possible_actions(self) -> List[MoveChoice]:
         return self._poss_actions
 
     def take_action(self, action: MoveChoice) -> 'CardState':

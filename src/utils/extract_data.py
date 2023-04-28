@@ -5,14 +5,15 @@ sys.path.append(os.path.abspath(os.path.join("../..")))
 from src.utils.mcts import _TreeNode as TreeNode
 from src.agents.mcts_player import CardState, MoveState
 from copy import deepcopy
+from typing import List, Tuple
 
 
-Board = list[list[int]]
+Board = List[List[int]]
 Expected = float
 Visits = int
 Depth = int  # how far from the root of MCTS
 Height = int  # how far until full board
-Stats = tuple[Board, Expected, Visits, Depth, Height]
+Stats = Tuple[Board, Expected, Visits, Depth, Height]
 
 
 def _reward(node: TreeNode):
@@ -20,7 +21,7 @@ def _reward(node: TreeNode):
     return node.total_reward / node.num_visits
 
 
-def _extract_rec(root: TreeNode, result: list[Stats], depth=0):
+def _extract_rec(root: TreeNode, result: List[Stats], depth=0):
     if root.num_visits == 0:
         return
 
@@ -36,7 +37,7 @@ def _extract_rec(root: TreeNode, result: list[Stats], depth=0):
         _extract_rec(child, result, depth + 1)
 
 
-def extract(root: TreeNode) -> list[Stats]:
+def extract(root: TreeNode) -> List[Stats]:
     """Traverse the tree and gather all info."""
     result = []
     _extract_rec(root, result)
