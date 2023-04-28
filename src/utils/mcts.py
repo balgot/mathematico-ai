@@ -11,6 +11,13 @@ Action = TypeVar("Action", bound=Hashable)
 
 
 class StateI(ABC):
+    def get_cnt(self):
+        """
+        Return number of occurences this node would have
+        in fully expanded card choice states.
+        """
+        return 1
+
     @abstractmethod
     def get_current_player(self) -> int:
         """Return 1 for maximizing, 0 for random, -1 for minimizing player."""
@@ -136,12 +143,12 @@ class MCTS:
         def is_iter_ok(iter):
             return self.max_iters is None or iter < self.max_iters
 
-        def is_time_ok(iter):
+        def is_time_ok():
             return self.max_time is None or time.time() < end
 
         # the loop
         for iter in count():
-            if not is_iter_ok(iter) or not is_time_ok(iter):
+            if not is_iter_ok(iter) or not is_time_ok():
                 break
             self.exec_round()
 
@@ -231,8 +238,8 @@ class MCTS:
 
     def _uct(self, node: _TreeNode, exploration: float, parent: _TreeNode) -> float:
         return (
-            node.state.get_current_player() * node.total_reward / node.num_visits +
-            exploration * math.sqrt(2 * math.log(parent.num_visits) / node.num_visits)
+            node.total_reward / node.num_visits +
+            exploration * math.sqrt(2 * math.log(parent.num_visits) / (node.num_visits * node.state.get_cnt()))
         )
 
     def best_child(self, node: _TreeNode, exploration: float) -> _TreeNode:

@@ -21,23 +21,23 @@ class CardState(StateI):
         self.board = board
         self.deck = deck
         self.children = {} # todo dict vs list
-        # self._poss_actions = [k for k, v in deck.items() for _ in range(v)]
+        # self._poss_actions = [(k, i) for k, v in deck.items() for i in range(v)]
         self._poss_actions = [k for k in deck if deck[k] > 0]
-        self._poss_actions.sort(key=lambda a: deck[a], reverse=True)
+        # self._poss_actions.sort(key=lambda a: deck[a], reverse=True)
 
     def get_current_player(self) -> int:
         return 0
 
     def get_possible_actions(self) -> List[CardChoice]:
-        # TODO: ignoring the action probability
         return self._poss_actions
 
     def take_action(self, action: CardChoice) -> 'MoveState':
-        assert action in self.deck and self.deck[action] > 0
+        card = action
+        assert card in self.deck and self.deck[card] > 0
         if action not in self.children:
             new_deck = deepcopy(self.deck)
-            new_deck[action] -= 1
-            self.children[action] = MoveState(self.board, new_deck, action)
+            new_deck[card] -= 1
+            self.children[action] = MoveState(self.board, new_deck, card, self.deck[card])
         return self.children[action]
 
     def is_terminal(self) -> bool:
@@ -48,12 +48,16 @@ class CardState(StateI):
 
 
 class MoveState(StateI):
-    def __init__(self, board: Board, deck: Dict[int, int], card: int):
+    def __init__(self, board: Board, deck: Dict[int, int], card: int, cnt: int = 1):
         self.board = board
         self.deck = deck
         self.card_to_play = card
         self.children = {}
         self._poss_actions = list(board.possible_moves())
+        self.cnt = cnt
+
+    def get_cnt(self):
+        return self.cnt
 
     def get_current_player(self) -> int:
         return 1
