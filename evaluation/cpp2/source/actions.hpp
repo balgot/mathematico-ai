@@ -5,54 +5,24 @@
 #include "misc.hpp"
 
 
-template <StateType T>
-class MathematicoAction;
-
-
-template <>
-class MathematicoAction<StateType::CARD_SELECTION>
-    : public Action<MathematicoState<StateType::CARD_SELECTION>> {
-
+class MAction : public Action<MState> {
 public:
+    int row = -1, col = -1;
+    Card c = 0;
 
-    using S = MathematicoState<StateType::CARD_SELECTION>;
-    Card c;
+    MAction() = default;
+    MAction(const MAction&) = default;
+    MAction(Card c) : c(c) {}
+    MAction(int row, int col) : row(row), col(col) {}
 
-    MathematicoAction() = default;  // idk?
-    MathematicoAction(Card c) : c(c) {}
-    MathematicoAction(const MathematicoAction&) = default;
-
-    virtual void execute(S& state) {
-        state.card_to_play = c;
+    virtual void execute(MState& state) {
+        assert((c > 0) ^ (row > -1 && col > -1));
+        if (c > 0) { state.card_to_play = c; }
+        else { state.play_move(row, col, state.card_to_play); }
     }
 
 protected:
     virtual void print(std::ostream& strm) {
-        strm << "Card: " << c;
-    }
-};
-
-
-template <>
-class MathematicoAction<StateType::POSITION_SELECTION>
-    : public Action<MathematicoState<StateType::POSITION_SELECTION>> {
-
-public:
-
-    using S = MathematicoState<StateType::POSITION_SELECTION>;
-    int row;
-    int col;
-
-    MathematicoAction() = default;  // idk?
-    MathematicoAction(int row, int col) : row(row), col(col) {}
-    MathematicoAction(const MathematicoAction&) = default;
-
-    virtual void execute(S& state) {
-        state.play_move(row, col, state.card_to_play);
-    }
-
-protected:
-    virtual void print(std::ostream& strm) {
-        strm << "Position: [" << row << ", " << col << "]";
+        strm << "Card: " << int(c) << "\tRow: " << row << " Col: " << col;
     }
 };

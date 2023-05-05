@@ -6,52 +6,32 @@
 static std::random_device rd;
 static std::mt19937 gen(rd());
 
-
-template <StateType T>
-class MPlayout;
-
-
-template <>
-class MPlayout<StateType::CARD_SELECTION>
-    : PlayoutStrategy<MathematicoState<StateType::CARD_SELECTION>, MathematicoAction<StateType::CARD_SELECTION>> {
-
-    using T = MathematicoState<StateType::CARD_SELECTION>;
-    using A = MathematicoAction<StateType::CARD_SELECTION>;
-
-    std::discrete_distribution<Card> dist;
-
-public:
-    MPlayout(T* state)
-        : PlayoutStrategy(state),
-          dist(state->deck.begin(), state->deck.end()) {}
-
-    virtual void generateRandom(A& action) {
-        auto res = dist(gen);
-        action.c = res;
-    }
-};
-
-
-template <>
-class MPlayout<StateType::POSITION_SELECTION>
-    : PlayoutStrategy<MathematicoState<StateType::POSITION_SELECTION>, MathematicoAction<StateType::POSITION_SELECTION>> {
-
-    using T = MathematicoState<StateType::POSITION_SELECTION>;
-    using A = MathematicoAction<StateType::POSITION_SELECTION>;
-
-
+class MPlayout : public PlayoutStrategy<MState, MAction> {
     std::vector<Position> moves;
     std::discrete_distribution<Card> dist;
 
 public:
-    MPlayout(T* state) : PlayoutStrategy(state),
-        moves(possible_moves(state->board)),
-        dist(moves.size(), 0, 0, [](auto) { return 1; })
-            {}
+    MPlayout(MState* state) : PlayoutStrategy(state) {
+        if (state->card_to_play != NO_CARD) {
+            moves = possible_moves(state->board);
+            dist = { moves.size(), 0, 0, [](auto) { return 1; }};
+        }
+        else {
+            dist = { state->deck.begin(), state->deck.end() };
+        }
+    }
 
-    virtual void generateRandom(A& action) {
+    virtual void generateRandom(MAction& action) {
         auto res = dist(gen);
-        action.row = moves[res].first;
-        action.col = moves[res].second;
+        action.c = 0;
+        action.row = action.col = -1;
+
+        if (state->card_to_play != NO_CARD) {
+            action.row = moves[res].first;
+            action.col = moves[res].second;
+        }
+        else {
+            action.c = res;
+        }
     }
 };

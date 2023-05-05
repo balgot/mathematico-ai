@@ -506,6 +506,12 @@ public:
     }
 
     /**
+     * @brief Get the number of performed iterations
+     * @return number of iterations
+     */
+    unsigned int getIterations() const { return iterations; }
+
+    /**
      * Set the allowed computation time in milliseconds
      * @param time In milliseconds
      */
@@ -550,9 +556,9 @@ public:
 
     ~MCTS()
     {
-        delete backprop;
-        delete termination;
-        delete scoring;
+        /*if (backprop) delete backprop;
+        if (termination) delete termination;
+        if (scoring) delete scoring;*/
     }
 
 private:
@@ -560,7 +566,7 @@ private:
     {
         std::chrono::system_clock::time_point old = std::chrono::system_clock::now();
 
-        while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - old) < allowedComputationTime || iterations < minIterations) {
+        while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - old) < allowedComputationTime || iterations < (unsigned int)minIterations) {
             iterations++;
 
             /**

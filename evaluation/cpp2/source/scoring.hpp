@@ -105,26 +105,8 @@ int eval(const Board& b) {
 }
 
 
-template <StateType T>
-class MScoring;
-
-template <>
-class MScoring <StateType::CARD_SELECTION>
-    : public Scoring<MathematicoState <StateType::CARD_SELECTION>> {
-
-    using T = MathematicoState <StateType::CARD_SELECTION>;
-
+class MScoring : public Scoring<MState> {
 public:
-    virtual float score(const T&) { assert(false); }
-};
-
-
-template <>
-class MScoring <StateType::POSITION_SELECTION>
-    : public Scoring<MathematicoState <StateType::POSITION_SELECTION>> {
-
-    using T = MathematicoState <StateType::POSITION_SELECTION>;
-
-public:
-    virtual float score(const T& s) { return eval(s.board); }
+    virtual float score(const MState& s) {
+        return eval(s.board); }
 };

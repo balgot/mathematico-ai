@@ -30,6 +30,23 @@ inline std::vector<Position> possible_moves(const Board& b) {
 }
 
 
+
+
+inline std::pair<Deck, int> find_deck(const Board &board) {
+    Deck available_cards;
+    available_cards.fill(4);
+    int moves_to_make = BOARD_SIZE * BOARD_SIZE;
+    for (const auto &row : board) {
+        for (const auto &e : row) {
+            available_cards[e]--;
+            moves_to_make -= e != 0;
+        }
+    }
+    available_cards[0] = 0;
+    return {available_cards, moves_to_make};
+}
+
+
 enum class StateType {
     POSITION_SELECTION,
     CARD_SELECTION

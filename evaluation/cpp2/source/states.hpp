@@ -7,24 +7,31 @@
 #include "mcts.hpp"
 #include "misc.hpp"
 
+Card NO_CARD = 0;
 
-template <StateType T>
-class MathematicoState : public State {
+class MState : public State {
 public:
     Board board;
     Deck deck;
-    Card card_to_play = -1;
+    Card card_to_play = NO_CARD; // this is set only for states in which the position should be chosen
+    int cards_played = 0;
 
-    MathematicoState(Board b, Deck d) : board(b), deck(d) {}
+    MState(Board b, Deck d, int cp) : board(b), deck(d), cards_played(cp) {}
+    MState(Board b, Deck d) : board(b), deck(d) {
+        for (const auto& row : board)
+            for (const auto& e: row)
+                cards_played += (e != 0);
+    }
 
     void play_move(int row, int col, Card c) {
         assert(board[row][col] == 0);
-        if (!deck[c]) { std::cout << *this << "\n"; }
         assert(deck[c] > 0);
         assert(0 < c);
         assert(c <= 13);
         board[row][col] = c;
         deck[c]--;
+        cards_played++;
+        card_to_play = NO_CARD;
     }
 
 private:
@@ -47,7 +54,7 @@ protected:
         print_board(strm);
         strm << "\n\n";
 
-        if (card_to_play > 0) {
+        if (card_to_play != NO_CARD) {
             strm << "Card: " << int(card_to_play) << "\n";
         }
 
@@ -62,31 +69,22 @@ protected:
 };
 
 
-template <StateType T>
-class MTermination : public TerminationCheck<MathematicoState<T>> {
+
+class MTermination : public TerminationCheck<MState> {
 public:
-    using S = MathematicoState<T>;
-    virtual bool isTerminal(const S& state) {
-        if constexpr (T == StateType::POSITION_SELECTION) {
-            return false;
-        }
-        else {
-            // TODO: improve
-            for (int i=0; i<BOARD_SIZE; ++i) {
-                for (int j=0; j<BOARD_SIZE; ++j) {
-                    if (state.board[i][j] == 0) return false;
-                }
-            }
-            return true;
-        }
+    virtual bool isTerminal(const MState& state) {
+        // final states are those where the last card was places = the ones
+        // with full board and no card 2 play
+        return state.cards_played == 25; // && state.card_to_play < 0;
     }
 };
 
-template <StateType T>
-class MBack : public Backpropagation<MathematicoState<T>> {
-public:
-    using S = MathematicoState<T>;
 
-    // TODO: probabs?
-    virtual float updateScore(const S& state, float score) { return score; }
+class MBack : public Backpropagation<MState> {
+public:
+    // TODO: use probabs?
+    virtual float updateScore(const MState& state, float score) {
+        (void)state;
+        return score;
+    }
 };
