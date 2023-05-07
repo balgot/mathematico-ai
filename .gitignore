@@ -133,3 +133,12 @@ dmypy.json
 
 # Remove later?
 gui/
+
+# Weight & Biases cache
+wandb/
+
+# VS Code metadata
+.vscode/
+
+# Custom files
+.ideas
