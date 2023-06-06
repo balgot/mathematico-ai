@@ -43,7 +43,7 @@ class MctsPlayer(Player):
 
     def reset(self) -> None:
         self.board = Board()
-        self.mcts.root = None  # TODO: make sure this resets MCTS in the future
+        self.mcts.root = None
 
     def move_(self, number: int):
         action = None
