@@ -1,7 +1,16 @@
 # AlphaMatico 1
 
 
-This project contains an implementation of a DRL (deep reinforcement learning) agent for the game [Mathematico](https://github.com/balgot/mathematico).
+This project contains an implementation of multiple agents designed to solve
+the game [Mathematico](https://github.com/balgot/mathematico). There are two
+types of agents:
+* pure Monte Carlo Tree Search
+* *AlphaZero* adaptation
+
+based on two different libraries:
+* [`open_spiel`](https://github.com/deepmind/open_spiel)
+* [`mcts`](https://github.com/pbsinclair42/MCTS) (custom AlphaZero implementation
+uses only the Value Head).
 
 
 ## Requirements
@@ -9,17 +18,11 @@ This project contains an implementation of a DRL (deep reinforcement learning) a
 This project was build using `Python 3.10` but should be able to support
 `3.11>Python>=3.9` out-of-the-box.
 
-
-## Installation
-
 Install the necessary packages:
 
 ```bash
-python -m pip install 'git+https://github.com/balgot/mathematico.git#egg=mathematico&subdirectory=game'
-python -m pip install -q torch pygame tabulate tqdm
-python -m pip install -q jupyter  # or jupyterlab ... to run the notebooks
+pip install -r requirements.txt
 ```
-
 
 ## Usage
 
@@ -30,17 +33,6 @@ This project contains multiple files for different purposes:
 * to view the implementation, head to `src/`
 
 See [Documentation](#documentation) below for further exaples.
-
-
-## License
-
-Open source, see `LICENSE` file for further details.
-
-
-
-## Authors
-
-Samuel Gazda, Michal Barnišin
 
 
 ## Documentation
@@ -159,7 +151,7 @@ necessary to wrap it, for example by:
 ```python
 from src.agents.ospiel import OpenSpielPlayer
 
-MAX_SIMULATIONS = 20  # does not matter here
+MAX_SIMULATIONS = 20  # does not matter here, original (training) value will be used
 player = OpenSpielPlayer(MAX_SIMULATIONS)
 player.bot = bot
 ```
@@ -174,3 +166,14 @@ these agents.
 
 See `evaluation/perft.py` for detailed instructions and `evaluation/perft.sh`
 for examples on how to use this script.
+
+
+## License
+
+Open source, see `LICENSE` file for further details.
+
+
+
+## Authors
+
+Samuel Gazda, Michal Barnišin
