@@ -36,7 +36,7 @@ evaluators played
 of human evaluators who played all of them
 * `perft.py` script to run evaluation
 * `perft.sh` script to compare all available agents at once
-* `*.py` classes with players to evaluate
+* `players/*.py` classes with players to evaluate (including pygame for humans)
 
 
 ## Recommendations

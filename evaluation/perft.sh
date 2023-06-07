@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 help() {
     echo "Running All Comparison of Avaiable Agents"
     echo
@@ -14,7 +16,6 @@ if [ "$#" -lt 1 ] || [ -f "$FILE" ]; then
     >&2 echo "File $FILE already exists or there are not enough arguments, aborting..."
     exit 1
 fi
-exit 0
 
 test_agent() {
     echo "Testing $1/$2#$3"
@@ -25,14 +26,20 @@ cp data_human_20.csv $FILE
 
 # testing with 5 random agents
 for RANDOM_AGENT in `seq 1 5`; do
-    test_agent random_player.py RandomPlayer $RANDOM_AGENT
+    test_agent players/random_player.py RandomPlayer $RANDOM_AGENT
 done
 
-# two of each mcts
-for AGENT in `seq 1 2`; do
-    for CLS in MCTS__100ms MCTS__1s; do  # MCTS__10s ??
-        test_agent mcts_player.py $CLS $AGENT
+# 3 of each mcts (except big ones)
+for AGENT in `seq 1 3`; do
+    for CLS in 10 20 50 100 250; do
+        test_agent players/mcts_player.py MCTS__$CLS $AGENT
+        test_agent players/open_spiel_mcts.py OpenSpiel__$CLS $AGENT
     done
 done
+
+# one from mcts biggest
+test_agent players/mcts_player.py MCTS__500 0
+test_agent players/open_spiel_mcts.py OpenSpiel__500 0
+test_agent players/open_spiel_mcts.py OpenSpiel__1000 0
 
 python perft.py --db-file $FILE
