@@ -138,17 +138,18 @@ Assuming that the previous script saved the configuration and the checkpoints
 to `PATH/` folder, it is possible to load the trained bot using:
 
 ```python
-from azero import load_trained_bot
+from azero import load_trained_bot as _load_azero_bot
 import json
+import os
 
 PATH = "PATH/"
 CHECKPOINT = -1
 
-def load_player_fn(args):
+def load_trained_bot():
     with open(os.path.join(PATH, "config.json"), "r") as f:
         cfg = json.load(f)
 
-    bot, _ = load_trained_bot(cfg, PATH, CHECKPOINT, is_eval=True)
+    bot, _ = _load_azero_bot(cfg, PATH, CHECKPOINT, is_eval=True)
     return bot
 ```
 
