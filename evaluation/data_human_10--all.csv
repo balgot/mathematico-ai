@@ -1,0 +1,4 @@
+pygame,human_player.py,human player #1 (skill 2/3),210,330,310,190,300,350,490,270,450,180,123.75114600658416
+pygame,human_player.py,human player #2 (skill 3/3),340,310,500,320,360,410,570,470,360,250,117.65
+ipywidgets,    <colab>,human player #3 (skill 2/3),210,340,390,320,380,410,380,510,390,230,101.107184
+ipywidgets,    <colab>,human player #4 (skill 0/3),220,260,330,240,210,280,340,460,330,180,163.52270579338074

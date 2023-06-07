@@ -33,7 +33,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from itertools import count, repeat
-from typing import List
+from typing import Callable, List
 
 from mathematico import Mathematico
 from tabulate import tabulate
@@ -104,16 +104,16 @@ def _tournament_rankings(data: List[Record]) -> List[float]:
         return []
 
     ranks = [0 for _ in range(len(data))]
-    WINNER_SCORE = len(data) - 1
     ROUNDS = len(data[0].points)
 
     for round in range(ROUNDS):
-        _scores = [(d.points[round], i) for i, d in enumerate(data)]
-        _scores.sort(reverse=True)  # from highest score to lowest
-        for (_, idx), score in zip(_scores, count(WINNER_SCORE, -1)):
-            ranks[idx] += score
-
-    return [score/ROUNDS for score in ranks]
+        for player in range(len(data)):
+            smaller_eq_cnt = 0
+            for other in range(len(data)):
+                if data[player].points[round] >= data[other].points[round]:
+                    smaller_eq_cnt += 1
+            ranks[player] += smaller_eq_cnt
+    return [score/(ROUNDS * len(data)) for score in ranks]
 
 
 def _avg_score_rankings(data: List[Record]) -> List[float]:
@@ -125,7 +125,12 @@ def _score_per_time_rankings(data: List[Record]) -> List[float]:
     return [(s - RANDOM_SCORE) / (d.avg_time + EPS) for s, d in zip(scores, data)]
 
 
-def _prep_data(data: List[Record], rank: Ranking):
+def _corr(method: Callable, a, b):
+    result = method(a, b)
+    return result.statistic, result.pvalue
+
+
+def _prep_data(data: List[Record], rank: Ranking, do_corr=False):
     headers = [
         "name", "file", "description", "avg_score",
         "time", "score gain/time", "tournament"
@@ -152,6 +157,26 @@ def _prep_data(data: List[Record], rank: Ranking):
     ]
 
     _data.sort(key=lambda r: r[order_by], reverse=True)
+
+    if do_corr:
+        import scipy
+
+        print("Correlations analysis (coef, p-value):")
+        print("=====================================")
+
+        print("Score vs Tournament")
+        print(f"\tSpearman: {_corr(scipy.stats.spearmanr, avg_score, tourn)}")
+        print(f"\tKendall: {_corr(scipy.stats.kendalltau, avg_score, tourn)}")
+
+        print("Score vs Time")
+        _times = [d.avg_time for d in data]
+        print(f"\tSpearman: {_corr(scipy.stats.spearmanr, avg_score, _times)}")
+        print(f"\tKendall: {_corr(scipy.stats.kendalltau, avg_score, _times)}")
+
+        print("Score vs Gain")
+        print(f"\tSpearman: {_corr(scipy.stats.spearmanr, avg_score, score_time)}")
+        print(f"\tKendall: {_corr(scipy.stats.kendalltau, avg_score, score_time)}")
+        print("\n\n")
     return tabulate(_data, headers=headers)
 
 
@@ -211,6 +236,19 @@ def make_parser():
         help="verbose"
     )
 
+    parser.add_argument("--statistics",
+        action="store_true",
+        default=False,
+        help="Print correlations"
+    )
+
+    parser.add_argument("--db-file",
+        type=str,
+        metavar="PATH",
+        default="data.csv",
+        help="Which file to load and store to"
+    )
+
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--sort-by-score',
         default=False, action='store_true', help='sort by  average score')
@@ -226,6 +264,9 @@ def main():
     parser = make_parser()
     args = parser.parse_args()
     verbose = args.verbose
+
+    global DB_FILE
+    DB_FILE = args.db_file
 
     if args.file and args.cls:
         if verbose:
@@ -280,7 +321,7 @@ def main():
     else:
         assert False
 
-    print(_prep_data(all_data, sort))
+    print(_prep_data(all_data, sort, args.statistics))
 
 
 
