@@ -32,7 +32,7 @@ class MctsPlayer(Player):
     """
 
     def __init__(self,
-        max_time_ms: int = 100,
+        max_time_ms: 'int | None' = 100,
         max_simulations: 'int | None' = None,
         exploration_constant: float = _EXPLORATION,
         policy = random_policy
