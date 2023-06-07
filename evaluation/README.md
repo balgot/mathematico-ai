@@ -34,6 +34,7 @@ See `python perft.py --help` for more.
 evaluators played
 * `data_human_20.csv` contains the results of the evalluation games (20)
 of human evaluators who played all of them
+* `data.csv` is measured data from a variety of agents
 * `perft.py` script to run evaluation
 * `perft.sh` script to compare all available agents at once
 * `players/*.py` classes with players to evaluate (including pygame for humans)
