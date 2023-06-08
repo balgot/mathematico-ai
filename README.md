@@ -47,7 +47,7 @@ The studied game, *Mathematico*, is part of another package. To install the game
 use:
 
 ```bash
-pip install install --quiet 'git+https://github.com/balgot/mathematico.git#egg=mathematico&subdirectory=game'
+pip install --quiet 'git+https://github.com/balgot/mathematico.git#egg=mathematico&subdirectory=game'
 ```
 
 In order to play the game, you need to supply a `Player` instance to the `Mathematico` object, e.g.:
