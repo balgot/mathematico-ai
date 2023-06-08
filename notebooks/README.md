@@ -5,8 +5,8 @@ as the demonstration of the functionality and code:
 
 * `mathematico.ipynb` - Mathematico game, properties, package demonstration
 * `mcts_open_spiel.ipynb` - how to use Mathematico in `open_spiel`
-* `rf.ipynb` - the implementation of the reinforcement learning;
+* `rf-mlp.ipynb` - the implementation of the reinforcement learning
     algorithm, with the connection to *W&B* to monitor the progress
     of the learning;
-* `rf-2.ipynb` - similar to `rf.ipynb`, but the architecture reuses the
-    "line" feature extractor, which is also pretrained.
+* `rf-cnn.ipynb` - similar to `rf.ipynb`, but the architecture is
+    based on convolutional blocks, without pre-training

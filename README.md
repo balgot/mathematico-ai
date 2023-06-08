@@ -158,7 +158,7 @@ player.bot = bot
 
 ### 5. Train (Value Network Only) Agent
 
-Use notebooks `notebooks/rf.ipynb` or `notebooks/rf-2.ipynb` to train
+Use notebooks `notebooks/rf-mlp.ipynb` or `notebooks/rf-cnn.ipynb` to train
 these agents.
 
 
