@@ -177,7 +177,7 @@ def _prep_data(data: List[Record], rank: Ranking, do_corr=False):
         print(f"\tSpearman: {_corr(scipy.stats.spearmanr, avg_score, score_time)}")
         print(f"\tKendall: {_corr(scipy.stats.kendalltau, avg_score, score_time)}")
         print("\n\n")
-    return tabulate(_data, headers=headers)
+    return tabulate(_data, headers=headers, showindex=True)
 
 
 ################################################################################
