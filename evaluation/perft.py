@@ -19,8 +19,8 @@ Sorting
 
         * tournament score [--sort-by-tournament]: for each of the simulated
           rounds, ranks the available agents, the WINNER obtains score of
-          `len(agents) - 1`, each consecutive placement obtains one point less,
-          the last player is awarded 0 points; the final score is averaged
+          `len(agents)`, each consecutive placement obtains one point less,
+          the last player is awarded 1 point; the final score is averaged
           over all rounds. Default.
 """
 import argparse
